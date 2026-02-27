@@ -4,22 +4,53 @@
   <meta charset="UTF-8">
   <meta name="theme-color" content="#ffffff">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="./manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>計算機+</title>
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@300&display=swap" rel="stylesheet">
   <style>
-    :root { --calc-font-size: min(8vw, 36px); }
-    body { background: #fff; margin: 0; font-family: 'M PLUS Rounded 1c', sans-serif; font-variant-numeric: tabular-nums; height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
-    #display-area { flex: 1; padding: 20px 20px 10px 20px; overflow-y: auto; display: flex; flex-direction: column; }
-    .history-row, .current-row-container { padding: 8px 0; font-size: var(--calc-font-size); font-weight: 300; line-height: 1.2; }
-    .history-row { border-bottom: 0.5px solid #efefef; color: #333; }
-    .current-row-container { min-height: 45px; display: flex; align-items: baseline; flex-wrap: wrap; }
+    :root { 
+      /* 入力中の文字を大きく、スマホの横幅いっぱいに最適化 */
+      --calc-font-size: min(9vw, 42px); 
+    }
+    body { 
+      background: #fff; margin: 0; 
+      font-family: 'M PLUS Rounded 1c', sans-serif; 
+      font-variant-numeric: tabular-nums; 
+      height: 100dvh; overflow: hidden; 
+      display: flex; flex-direction: column; 
+      -webkit-user-select: none; user-select: none;
+    }
+    #display-area { 
+      flex: 1; padding: 20px 20px 10px 20px; 
+      overflow-y: auto; display: flex; flex-direction: column; 
+    }
+    .history-row { 
+      padding: 8px 0; font-size: calc(var(--calc-font-size) * 0.85); 
+      font-weight: 300; line-height: 1.2; border-bottom: 0.5px solid #efefef; color: #333; 
+    }
+    .current-row-container { 
+      padding: 15px 0; 
+      font-size: var(--calc-font-size); 
+      font-weight: 300; line-height: 1.2; 
+      min-height: 60px; display: flex; align-items: baseline; flex-wrap: wrap; 
+    }
     .token { display: inline-block; white-space: pre; }
-    .preview-text { color: #ccc; margin-left: 8px; }
+    .preview-text { color: #ccc; margin-left: 8px; font-size: 0.9em; }
     .token-active { color: #3B82C4 !important; border-bottom: 3px solid #3B82C4; margin-bottom: -3px; min-width: 1ch; }
-    #keypad { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(5, 1fr) 0.8fr; background: #e0e0e0; gap: 1px; border-top: 1px solid #e0e0e0; height: 45dvh; }
-    button { border: none; background: white; font-family: 'M PLUS Rounded 1c', sans-serif; font-variant-numeric: tabular-nums; font-size: min(8.5vw, 32px); font-weight: 300; color: #333; display: flex; justify-content: center; align-items: center; outline: none; -webkit-tap-highlight-color: transparent; }
+    
+    #keypad { 
+      display: grid; grid-template-columns: repeat(4, 1fr); 
+      grid-template-rows: repeat(5, 1fr) 0.8fr; 
+      background: #e0e0e0; gap: 1px; border-top: 1px solid #e0e0e0; height: 45dvh; 
+    }
+    button { 
+      border: none; background: white; font-family: 'M PLUS Rounded 1c', sans-serif; 
+      font-variant-numeric: tabular-nums; font-size: min(8.5vw, 32px); 
+      font-weight: 300; color: #333; display: flex; justify-content: center; 
+      align-items: center; outline: none; -webkit-tap-highlight-color: transparent; 
+    }
     button:active { background: #f2f2f2; }
     .op-btn { background: #3B82C4 !important; color: white !important; font-size: min(10vw, 38px); }
     .special-btn { color: #333; font-size: min(5vw, 20px); background: #fbfbfb; }
@@ -29,75 +60,6 @@
 <body>
 <div id="display-area">
   <div id="history-box"></div>
-  <div class="current-row-display" id="current-row-display" style="min-height:45px; display:flex; align-items:baseline; flex-wrap:wrap;"></div>
+  <div class="current-row-container" id="current-row-display"></div>
 </div>
 <div id="keypad">
-  <button onclick="playClickSound(); handleClearDel()" class="special-btn">AC</button>
-  <button class="dummy-row" style="background:#fbfbfb"></button><button class="dummy-row" style="background:#fbfbfb"></button>
-  <button onclick="playClickSound(); addOp('/')" class="op-btn">÷</button>
-  <button onclick="playClickSound(); addNum('7')">7</button><button onclick="playClickSound(); addNum('8')">8</button><button onclick="playClickSound(); addNum('9')">9</button>
-  <button onclick="playClickSound(); addOp('*')" class="op-btn">×</button>
-  <button onclick="playClickSound(); addNum('4')">4</button><button onclick="playClickSound(); addNum('5')">5</button><button onclick="playClickSound(); addNum('6')">6</button>
-  <button onclick="playClickSound(); addOp('-')" class="op-btn">-</button>
-  <button onclick="playClickSound(); addNum('1')">1</button><button onclick="playClickSound(); addNum('2')">2</button><button onclick="addNum('3'); playClickSound()">3</button>
-  <button onclick="playClickSound(); addOp('+')" class="op-btn">+</button>
-  <button onclick="playClickSound(); addNum('0')">0</button><button onclick="playClickSound(); addNum('00')">00</button><button onclick="playClickSound(); addNum('.')">.</button>
-  <button onclick="playClickSound(); calc()" class="op-btn">=</button>
-  <div class="dummy-row"></div><div class="dummy-row"></div><div class="dummy-row"></div><div class="dummy-row"></div>
-</div>
-<script>
-  let formula = ""; let displayFormula = ""; let hasOperatorBeenUsed = false;
-  const historyBox = document.getElementById('history-box');
-  const currentRowDisplay = document.getElementById('current-row-display');
-  const displayArea = document.getElementById('display-area');
-
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  function playClickSound() {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-    osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-  }
-
-  function formatNum(n) { if (!n) return ""; let s = n.toString(); let parts = s.split("."); parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ","); return parts.join("."); }
-  function updateDisplay() {
-    document.querySelector('.special-btn').innerText = formula ? "⌫" : "AC";
-    currentRowDisplay.innerHTML = "";
-    const tokens = displayFormula.split(" "); 
-    if (!displayFormula) {
-      const span = document.createElement('span'); span.classList.add('token', 'token-active'); span.innerHTML = "&nbsp;"; currentRowDisplay.appendChild(span);
-    } else {
-      tokens.forEach((token, index) => {
-        if (!token && index !== tokens.length - 1) return;
-        const span = document.createElement('span'); span.classList.add('token');
-        if (["+", "-", "×", "÷"].includes(token)) span.innerText = " " + token + " ";
-        else if (token) span.innerText = formatNum(token);
-        if (index === tokens.length - 1) span.classList.add('token-active');
-        currentRowDisplay.appendChild(span);
-      });
-    }
-    if (hasOperatorBeenUsed && formula.trim()) {
-      try {
-        const last = formula.trim().slice(-1);
-        if (!"+-*/".includes(last)) {
-          const res = eval(formula);
-          const p = document.createElement('span'); p.className = 'preview-text'; p.innerText = " = " + formatNum(res);
-          currentRowDisplay.appendChild(p);
-        }
-      } catch {}
-    }
-    displayArea.scrollTop = displayArea.scrollHeight;
-  }
-
-  function addNum(n) { formula += n; displayFormula += n; updateDisplay(); }
-  function addOp(op) { if (!formula || "+-*/".includes(formula.trim().slice(-1))) return; hasOperatorBeenUsed = true; formula += " " + op + " "; let s = (op === '*') ? '×' : (op === '/') ? '÷' : op; displayFormula += " " + s + " "; updateDisplay(); }
-  function handleClearDel() { if (!formula) { historyBox.innerHTML = ""; clearAllState(); } else { if (displayFormula.endsWith(" ")) { formula = formula.trim().slice(0, -1).trim(); displayFormula = displayFormula.trim().slice(0, -1).trim(); } else { formula = formula.slice(0, -1); displayFormula = displayFormula.slice(0, -1); } hasOperatorBeenUsed = /[+\-*/]/.test(formula); updateDisplay(); } }
-  function clearAllState() { formula = ""; displayFormula = ""; hasOperatorBeenUsed = false; updateDisplay(); }
-  function calc() { if (!formula || !hasOperatorBeenUsed || "+-*/".includes(formula.trim().slice(-1))) return; try { const res = eval(formula); const row = document.createElement('div'); row.className = 'history-row'; let txt = ""; displayFormula.split(" ").forEach(t => { if (["+", "-", "×", "÷"].includes(t)) txt += " " + t + " "; else if(t) txt += formatNum(t); }); row.innerText = `${txt} = ${formatNum(res)}`; row.onclick = () => { playClickSound(); formula = String(formula); displayFormula = String(displayFormula); hasOperatorBeenUsed = true; updateDisplay(); }; historyBox.appendChild(row); clearAllState(); } catch {} }
-  updateDisplay();
-</script>
-</body>
-</html>
