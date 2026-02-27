@@ -6,10 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <link rel="manifest" href="./manifest.json">
   <title>計算機+</title>
-  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400&display=swap" rel="stylesheet">
   <style>
     :root { 
-      --font-huge: 11vw; 
+      /* 全体的に「気持ち小さく」調整 */
+      --font-base: 10vw; 
     }
     body { 
       background: #fff; margin: 0; font-family: 'M PLUS Rounded 1c', sans-serif; 
@@ -18,26 +19,29 @@
     }
     #display-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
     
+    /* 履歴：太字を解除し、サイズを適正化 */
     .history-row { 
-      padding: 15px 0; font-size: var(--font-huge); font-weight: 700; 
-      line-height: 1.2; border-bottom: 2px solid #f0f0f0; color: #000; word-break: break-all;
+      padding: 12px 0; font-size: var(--font-base); font-weight: 400; 
+      line-height: 1.2; border-bottom: 1.5px solid #f5f5f5; color: #333; word-break: break-all;
     }
     
+    /* 入力中：太字を解除 */
     .current-row-container { 
-      padding: 15px 0; font-size: var(--font-huge); font-weight: 700; 
-      min-height: 80px; display: flex; align-items: baseline; flex-wrap: wrap; color: #3B82C4;
+      padding: 15px 0; font-size: var(--font-base); font-weight: 400; 
+      min-height: 70px; display: flex; align-items: baseline; flex-wrap: wrap; color: #3B82C4;
     }
     .token { display: inline-block; white-space: pre; }
 
-    /* ★ここを修正：予測結果（プレビュー）を巨大化★ */
+    /* 予測結果：入力文字と同じサイズ感にし、少しだけ色を濃く */
     .preview-text { 
-      color: #aaa; 
+      color: #999; 
       margin-left: 10px; 
-      font-size: 1.1em; /* 入力文字よりさらに大きく強調 */
-      font-weight: 700;
+      font-size: 1.05em; 
+      font-weight: 400;
     }
 
-    .token-active { border-bottom: 6px solid #3B82C4; margin-bottom: -6px; min-width: 1ch; }
+    /* カーソル代わりの下線 */
+    .token-active { border-bottom: 4px solid #3B82C4; margin-bottom: -4px; min-width: 1ch; }
     
     #keypad { 
       display: grid; grid-template-columns: repeat(4, 1fr); 
@@ -46,14 +50,13 @@
     }
     button { 
       border: none; background: white; font-family: 'M PLUS Rounded 1c', sans-serif; 
-      font-size: 34px; font-weight: 700; color: #333; 
+      font-size: 32px; font-weight: 400; color: #333; 
       display: flex; justify-content: center; align-items: center; outline: none; 
       -webkit-tap-highlight-color: transparent; 
     }
     button:active { background: #f2f2f2; }
-    .op-btn { background: #3B82C4 !important; color: white !important; font-size: 40px; }
-    .special-btn { color: #333; font-size: 24px; background: #fbfbfb; }
-    .dummy-row { background: white; pointer-events: none; }
+    .op-btn { background: #3B82C4 !important; color: white !important; font-size: 36px; }
+    .special-btn { color: #333; font-size: 22px; background: #fbfbfb; }
   </style>
 </head>
 <body>
@@ -63,25 +66,16 @@
 </div>
 <div id="keypad">
   <button onclick="playClickSound(); handleClearDel()" class="special-btn">AC</button>
-  <div class="dummy-row"></div><div class="dummy-row"></div>
+  <div style="background:white"></div><div style="background:white"></div>
   <button onclick="playClickSound(); addOp('/')" class="op-btn">÷</button>
-  <button onclick="playClickSound(); addNum('7')">7</button>
-  <button onclick="playClickSound(); addNum('8')">8</button>
-  <button onclick="playClickSound(); addNum('9')">9</button>
+  <button onclick="playClickSound(); addNum('7')">7</button><button onclick="playClickSound(); addNum('8')">8</button><button onclick="playClickSound(); addNum('9')">9</button>
   <button onclick="playClickSound(); addOp('*')" class="op-btn">×</button>
-  <button onclick="playClickSound(); addNum('4')">4</button>
-  <button onclick="playClickSound(); addNum('5')">5</button>
-  <button onclick="playClickSound(); addNum('6')">6</button>
+  <button onclick="playClickSound(); addNum('4')">4</button><button onclick="playClickSound(); addNum('5')">5</button><button onclick="playClickSound(); addNum('6')">6</button>
   <button onclick="playClickSound(); addOp('-')" class="op-btn">-</button>
-  <button onclick="playClickSound(); addNum('1')">1</button>
-  <button onclick="playClickSound(); addNum('2')">2</button>
-  <button onclick="playClickSound(); addNum('3')">3</button>
+  <button onclick="playClickSound(); addNum('1')">1</button><button onclick="playClickSound(); addNum('2')">2</button><button onclick="playClickSound(); addNum('3')">3</button>
   <button onclick="playClickSound(); addOp('+')" class="op-btn">+</button>
-  <button onclick="playClickSound(); addNum('0')">0</button>
-  <button onclick="playClickSound(); addNum('00')">00</button>
-  <button onclick="playClickSound(); addNum('.')">.</button>
+  <button onclick="playClickSound(); addNum('0')">0</button><button onclick="playClickSound(); addNum('00')">00</button><button onclick="playClickSound(); addNum('.')">.</button>
   <button onclick="playClickSound(); calc()" class="op-btn">=</button>
-  <div class="dummy-row"></div><div class="dummy-row"></div><div class="dummy-row"></div><div class="dummy-row"></div>
 </div>
 
 <script>
@@ -95,7 +89,7 @@
     if (audioCtx.state === 'suspended') audioCtx.resume();
     const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
     osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
     osc.connect(gain); gain.connect(audioCtx.destination);
     osc.start(); osc.stop(audioCtx.currentTime + 0.05);
