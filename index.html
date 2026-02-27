@@ -72,3 +72,61 @@
   <button onclick="playClickSound(); calc()" class="op-btn">=</button>
   <div class="dummy-row"></div><div class="dummy-row"></div><div class="dummy-row"></div><div class="dummy-row"></div>
 </div>
+<script>
+  let formula = ""; let displayFormula = ""; let hasOp = false;
+  const historyBox = document.getElementById('history-box');
+  const currentRowDisplay = document.getElementById('current-row-display');
+  const displayArea = document.getElementById('display-area');
+
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  function playClickSound() {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+    osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+  }
+
+  function formatNum(n) { if (!n) return ""; let s = n.toString(); let p = s.split("."); p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ","); return p.join("."); }
+  function updateDisplay() {
+    document.querySelector('.special-btn').innerText = formula ? "⌫" : "AC";
+    currentRowDisplay.innerHTML = "";
+    const tokens = displayFormula.split(" ");
+    if (!displayFormula) {
+      const span = document.createElement('span'); span.classList.add('token', 'token-active'); span.innerHTML = "&nbsp;"; currentRowDisplay.appendChild(span);
+    } else {
+      tokens.forEach((t, i) => {
+        if (!t && i !== tokens.length - 1) return;
+        const span = document.createElement('span'); span.classList.add('token');
+        if (["+", "-", "×", "÷"].includes(t)) span.innerText = " " + t + " ";
+        else if (t) span.innerText = formatNum(t);
+        if (i === tokens.length - 1) span.classList.add('token-active');
+        currentRowDisplay.appendChild(span);
+      });
+    }
+    if (hasOp && formula.trim()) {
+      try {
+        const last = formula.trim().slice(-1);
+        if (!"+-*/".includes(last)) {
+          const res = eval(formula);
+          const p = document.createElement('span'); p.className = 'preview-text'; p.innerText = " = " + formatNum(res);
+          currentRowDisplay.appendChild(p);
+        }
+      } catch {}
+    }
+    displayArea.scrollTop = displayArea.scrollHeight;
+  }
+  function addNum(n) { formula += n; displayFormula += n; updateDisplay(); }
+  function addOp(op) { if (!formula || "+-*/".includes(formula.trim().slice(-1))) return; hasOp = true; formula += " " + op + " "; let s = (op === '*') ? '×' : (op === '/') ? '÷' : op; displayFormula += " " + s + " "; updateDisplay(); }
+  function handleClearDel() { if (!formula) { historyBox.innerHTML = ""; formula = ""; displayFormula = ""; hasOp = false; updateDisplay(); } else { if (displayFormula.endsWith(" ")) { formula = formula.trim().slice(0, -1).trim(); displayFormula = displayFormula.trim().slice(0, -1).trim(); } else { formula = formula.slice(0, -1); displayFormula = displayFormula.slice(0, -1); } hasOp = /[+\-*/]/.test(formula); updateDisplay(); } }
+  function calc() { if (!formula || !hasOp || "+-*/".includes(formula.trim().slice(-1))) return; try { const res = eval(formula); const row = document.createElement('div'); row.className = 'history-row'; let txt = ""; displayFormula.split(" ").forEach(t => { if (["+", "-", "×", "÷"].includes(t)) txt += " " + t + " "; else if(t) txt += formatNum(t); }); row.innerText = `${txt} = ${formatNum(res)}`; historyBox.appendChild(row); formula = ""; displayFormula = ""; hasOp = false; updateDisplay(); } catch {} }
+  updateDisplay();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
+  }
+</script>
+</body>
+</html>
