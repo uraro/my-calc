@@ -2,96 +2,84 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="theme-color" content="#ffffff">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <link rel="manifest" href="./manifest.json">
-  <title>計算機+</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>究極の電卓</title>
   <style>
-    /* フォント読み込みエラーを避けるため、標準フォントも併記 */
-    body { 
-      background: #fff; margin: 0; font-family: sans-serif; 
-      height: 100dvh; overflow: hidden; display: flex; flex-direction: column; 
-    }
-    #display-area { 
-      flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; 
-    }
-    /* 履歴：とにかく大きく(40px) */
-    .history-row { 
-      padding: 15px 0; font-size: 40px; font-weight: bold; 
-      border-bottom: 2px solid #eee; color: #000; word-break: break-all;
-    }
-    /* 入力中：もっと大きく(50px) */
-    .current-row-container { 
-      padding: 20px 0; font-size: 50px; font-weight: bold; 
-      min-height: 80px; color: #3B82C4; 
-    }
-    #keypad { 
-      display: grid; grid-template-columns: repeat(4, 1fr); 
-      grid-template-rows: repeat(5, 1fr) 0.8fr; 
-      background: #ccc; gap: 1px; height: 45dvh; 
-    }
-    button { 
-      border: none; background: #fff; font-size: 32px; font-weight: bold; 
-      display: flex; justify-content: center; align-items: center; outline: none; 
-    }
+    body { margin: 0; font-family: sans-serif; height: 100dvh; display: flex; flex-direction: column; background: #fff; }
+    #display-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
+    /* 履歴：文字を大きく、太く */
+    .history-row { font-size: 36px; font-weight: bold; padding: 10px 0; border-bottom: 1px solid #eee; color: #333; }
+    /* 入力中：もっと大きく */
+    #current-line { font-size: 48px; font-weight: bold; padding: 20px 0; color: #3B82C4; min-height: 60px; }
+    #keypad { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(5, 1fr); height: 50dvh; background: #ccc; gap: 1px; }
+    button { border: none; background: #fff; font-size: 30px; font-weight: bold; cursor: pointer; -webkit-tap-highlight-color: transparent; }
     button:active { background: #eee; }
-    .op-btn { background: #3B82C4 !important; color: #fff !important; font-size: 40px; }
-    .special-btn { background: #f9f9f9; font-size: 24px; }
-    .dummy-row { background: #fff; pointer-events: none; }
+    .op { background: #3B82C4; color: #fff; font-size: 36px; }
+    .ac { background: #f9f9f9; font-size: 24px; }
   </style>
 </head>
 <body>
-<div id="display-area">
-  <div id="history-box"></div>
-  <div class="current-row-container" id="display-line"></div>
-</div>
-<div id="keypad">
-  <button onclick="f_ac()" class="special-btn">AC</button>
-  <div class="dummy-row"></div><div class="dummy-row"></div>
-  <button onclick="f_op('/')" class="op-btn">÷</button>
-  <button onclick="f_num('7')">7</button><button onclick="f_num('8')">8</button><button onclick="f_num('9')">9</button>
-  <button onclick="f_op('*')" class="op-btn">×</button>
-  <button onclick="f_num('4')">4</button><button onclick="f_num('5')">5</button><button onclick="f_num('6')">6</button>
-  <button onclick="f_op('-')" class="op-btn">-</button>
-  <button onclick="f_num('1')">1</button><button onclick="f_num('2')">2</button><button onclick="f_num('3')">3</button>
-  <button onclick="f_op('+')" class="op-btn">+</button>
-  <button onclick="f_num('0')">0</button><button onclick="f_num('00')">00</button><button onclick="f_num('.')">.</button>
-  <button onclick="f_calc()" class="op-btn">=</button>
-  <div class="dummy-row"></div><div class="dummy-row"></div><div class="dummy-row"></div><div class="dummy-row"></div>
-</div>
+  <div id="display-area">
+    <div id="history-box"></div>
+    <div id="current-line"></div>
+  </div>
+  <div id="keypad">
+    <button onclick="doAC()" class="ac">AC</button>
+    <button onclick="doDel()" class="ac">⌫</button>
+    <button style="background:#f9f9f9"></button>
+    <button onclick="addOp('/')" class="op">÷</button>
+    <button onclick="addNum('7')">7</button><button onclick="addNum('8')">8</button><button onclick="addNum('9')">9</button>
+    <button onclick="addOp('*')" class="op">×</button>
+    <button onclick="addNum('4')">4</button><button onclick="addNum('5')">5</button><button onclick="addNum('6')">6</button>
+    <button onclick="addOp('-')" class="op">-</button>
+    <button onclick="addNum('1')">1</button><button onclick="addNum('2')">2</button><button onclick="addNum('3')">3</button>
+    <button onclick="addOp('+')" class="op">+</button>
+    <button onclick="addNum('0')">0</button><button onclick="addNum('00')">00</button><button onclick="addNum('.')">.</button>
+    <button onclick="doCalc()" class="op">=</button>
+  </div>
 
-<script>
-  // 動作を確実にするため、関数名をシンプルに短縮
-  let f = ""; let df = ""; let h = false;
-  const box = document.getElementById('history-box');
-  const line = document.getElementById('display-line');
-  const area = document.getElementById('display-area');
+  <script>
+    let rawFormula = "";
+    let displayFormula = "";
+    const historyBox = document.getElementById('history-box');
+    const currentLine = document.getElementById('current-line');
+    const displayArea = document.getElementById('display-area');
 
-  function f_num(n) { f += n; df += n; u(); }
-  function f_op(o) { 
-    if(!f || "+-*/".includes(f.trim().slice(-1))) return;
-    h = true; f += " " + o + " "; 
-    df += " " + (o=='*'?'×':o=='/'?'÷':o) + " "; u(); 
-  }
-  function f_ac() {
-    if(!f) { box.innerHTML = ""; }
-    f = ""; df = ""; h = false; u();
-  }
-  function f_calc() {
-    if(!f || !h || "+-*/".includes(f.trim().slice(-1))) return;
-    try {
-      let res = eval(f);
-      let r = document.createElement('div'); r.className = 'history-row';
-      r.innerText = df + " = " + res.toLocaleString();
-      box.appendChild(r); f = ""; df = ""; h = false; u();
-      area.scrollTo(0, area.scrollHeight);
-    } catch(e) { alert("Error"); }
-  }
-  function u() {
-    line.innerText = df || " ";
-    area.scrollTo(0, area.scrollHeight);
-  }
-  // サービスワーカーなしでも動くよう、一旦登録を外してテスト
-</script>
+    function u() {
+      currentLine.innerText = displayFormula || "0";
+      displayArea.scrollTop = displayArea.scrollHeight;
+    }
+    function addNum(n) {
+      rawFormula += n;
+      displayFormula += n;
+      u();
+    }
+    function addOp(op) {
+      if(!rawFormula || "+-*/".includes(rawFormula.slice(-1))) return;
+      rawFormula += op;
+      displayFormula += (op=='*'?'×':op=='/'?'÷':op);
+      u();
+    }
+    function doAC() {
+      rawFormula = ""; displayFormula = ""; historyBox.innerHTML = ""; u();
+    }
+    function doDel() {
+      rawFormula = rawFormula.slice(0, -1);
+      displayFormula = displayFormula.slice(0, -1);
+      u();
+    }
+    function doCalc() {
+      if(!rawFormula || "+-*/".includes(rawFormula.slice(-1))) return;
+      try {
+        let result = eval(rawFormula);
+        let row = document.createElement('div');
+        row.className = 'history-row';
+        row.innerText = displayFormula + " = " + result.toLocaleString();
+        historyBox.appendChild(row);
+        rawFormula = ""; displayFormula = ""; u();
+      } catch(e) { alert("計算エラー"); }
+    }
+    u();
+  </script>
 </body>
 </html>
