@@ -7,13 +7,12 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2344/2344132.png">
   <title>計算機+</title>
-  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500&display=swap" rel="stylesheet">
   <style>
     :root { 
-      /* 入力中の文字サイズを大幅アップ */
-      --current-font-size: min(11vw, 48px); 
-      /* 履歴（結果）の文字サイズをアップ */
-      --history-font-size: 32px;
+      /* 入力中も結果も、とにかくデカく設定 */
+      --font-size-huge: min(11vw, 50px); 
+      --font-size-history: 40px; 
     }
     body { 
       background: #fff; margin: 0; font-family: 'M PLUS Rounded 1c', sans-serif; 
@@ -21,20 +20,33 @@
       display: flex; flex-direction: column; -webkit-user-select: none; user-select: none;
     }
     #display-area { 
-      flex: 1; padding: 25px 20px 10px 20px; 
+      flex: 1; padding: 20px; 
       overflow-y: auto; display: flex; flex-direction: column; 
     }
+    /* 履歴（計算結果）のスタイル：ここを巨大化 */
     .history-row { 
-      padding: 12px 0; font-size: var(--history-font-size); 
-      font-weight: 400; line-height: 1.3; border-bottom: 1px solid #f0f0f0; color: #333; 
+      padding: 15px 0; 
+      font-size: var(--font-size-history); 
+      font-weight: 500; 
+      line-height: 1.2; 
+      border-bottom: 2px solid #f0f0f0; 
+      color: #111; /* より濃い黒に */
+      word-break: break-all;
     }
+    /* 入力中のスタイル */
     .current-row-container { 
-      padding: 20px 0; font-size: var(--current-font-size); 
-      font-weight: 400; min-height: 70px; display: flex; align-items: baseline; flex-wrap: wrap; 
+      padding: 20px 0; 
+      font-size: var(--font-size-huge); 
+      font-weight: 500; 
+      min-height: 80px; 
+      display: flex; 
+      align-items: baseline; 
+      flex-wrap: wrap; 
+      color: #3B82C4; /* 入力中は少し色を変えて判別しやすく */
     }
     .token { display: inline-block; white-space: pre; }
-    .preview-text { color: #bbb; margin-left: 10px; font-size: 0.85em; }
-    .token-active { color: #3B82C4 !important; border-bottom: 4px solid #3B82C4; margin-bottom: -4px; min-width: 1ch; }
+    .preview-text { color: #ccc; margin-left: 10px; font-size: 0.8em; }
+    .token-active { border-bottom: 5px solid #3B82C4; margin-bottom: -5px; min-width: 1ch; }
     
     #keypad { 
       display: grid; grid-template-columns: repeat(4, 1fr); 
@@ -43,13 +55,13 @@
     }
     button { 
       border: none; background: white; font-family: 'M PLUS Rounded 1c', sans-serif; 
-      font-size: min(9vw, 34px); font-weight: 400; color: #333; 
+      font-size: min(9vw, 36px); font-weight: 500; color: #333; 
       display: flex; justify-content: center; align-items: center; outline: none; 
       -webkit-tap-highlight-color: transparent; 
     }
     button:active { background: #f2f2f2; }
-    .op-btn { background: #3B82C4 !important; color: white !important; font-size: min(11vw, 42px); }
-    .special-btn { color: #333; font-size: 22px; background: #fbfbfb; }
+    .op-btn { background: #3B82C4 !important; color: white !important; font-size: min(11vw, 44px); }
+    .special-btn { color: #333; font-size: 24px; background: #fbfbfb; }
     .dummy-row { background: white; pointer-events: none; }
   </style>
 </head>
@@ -66,67 +78,6 @@
   <button onclick="playClickSound(); addOp('*')" class="op-btn">×</button>
   <button onclick="playClickSound(); addNum('4')">4</button><button onclick="playClickSound(); addNum('5')">5</button><button onclick="playClickSound(); addNum('6')">6</button>
   <button onclick="playClickSound(); addOp('-')" class="op-btn">-</button>
-  <button onclick="playClickSound(); addNum('1')">1</button><button onclick="playClickSound(); addNum('2')">2</button><button onclick="addNum('3'); playClickSound()">3</button>
+  <button onclick="playClickSound(); addNum('1')">1</button><button onclick="playClickSound(); addNum('2')">2</button><button onclick="playClickSound(); addNum('3')">3</button>
   <button onclick="playClickSound(); addOp('+')" class="op-btn">+</button>
-  <button onclick="playClickSound(); addNum('0')">0</button><button onclick="playClickSound(); addNum('00')">00</button><button onclick="playClickSound(); addNum('.')">.</button>
-  <button onclick="playClickSound(); calc()" class="op-btn">=</button>
-  <div class="dummy-row"></div><div class="dummy-row"></div><div class="dummy-row"></div><div class="dummy-row"></div>
-</div>
-<script>
-  let formula = ""; let displayFormula = ""; let hasOp = false;
-  const historyBox = document.getElementById('history-box');
-  const currentRowDisplay = document.getElementById('current-row-display');
-  const displayArea = document.getElementById('display-area');
-
-  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  function playClickSound() {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-    osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.05);
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-  }
-
-  function formatNum(n) { if (!n) return ""; let s = n.toString(); let p = s.split("."); p[0] = p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ","); return p.join("."); }
-  function updateDisplay() {
-    document.querySelector('.special-btn').innerText = formula ? "⌫" : "AC";
-    currentRowDisplay.innerHTML = "";
-    const tokens = displayFormula.split(" ");
-    if (!displayFormula) {
-      const span = document.createElement('span'); span.classList.add('token', 'token-active'); span.innerHTML = "&nbsp;"; currentRowDisplay.appendChild(span);
-    } else {
-      tokens.forEach((t, i) => {
-        if (!t && i !== tokens.length - 1) return;
-        const span = document.createElement('span'); span.classList.add('token');
-        if (["+", "-", "×", "÷"].includes(t)) span.innerText = " " + t + " ";
-        else if (t) span.innerText = formatNum(t);
-        if (i === tokens.length - 1) span.classList.add('token-active');
-        currentRowDisplay.appendChild(span);
-      });
-    }
-    if (hasOp && formula.trim()) {
-      try {
-        const last = formula.trim().slice(-1);
-        if (!"+-*/".includes(last)) {
-          const res = eval(formula);
-          const p = document.createElement('span'); p.className = 'preview-text'; p.innerText = " = " + formatNum(res);
-          currentRowDisplay.appendChild(p);
-        }
-      } catch {}
-    }
-    displayArea.scrollTop = displayArea.scrollHeight;
-  }
-  function addNum(n) { formula += n; displayFormula += n; updateDisplay(); }
-  function addOp(op) { if (!formula || "+-*/".includes(formula.trim().slice(-1))) return; hasOp = true; formula += " " + op + " "; let s = (op === '*') ? '×' : (op === '/') ? '÷' : op; displayFormula += " " + s + " "; updateDisplay(); }
-  function handleClearDel() { if (!formula) { historyBox.innerHTML = ""; formula = ""; displayFormula = ""; hasOp = false; updateDisplay(); } else { if (displayFormula.endsWith(" ")) { formula = formula.trim().slice(0, -1).trim(); displayFormula = displayFormula.trim().slice(0, -1).trim(); } else { formula = formula.slice(0, -1); displayFormula = displayFormula.slice(0, -1); } hasOp = /[+\-*/]/.test(formula); updateDisplay(); } }
-  function calc() { if (!formula || !hasOp || "+-*/".includes(formula.trim().slice(-1))) return; try { const res = eval(formula); const row = document.createElement('div'); row.className = 'history-row'; let txt = ""; displayFormula.split(" ").forEach(t => { if (["+", "-", "×", "÷"].includes(t)) txt += " " + t + " "; else if(t) txt += formatNum(t); }); row.innerText = `${txt} = ${formatNum(res)}`; historyBox.appendChild(row); formula = ""; displayFormula = ""; hasOp = false; updateDisplay(); } catch {} }
-  updateDisplay();
-
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js'); });
-  }
-</script>
-</body>
-</html>
+  <button onclick="playClickSound(); addNum('0')">0</button><button onclick="playClickSound(); addNum('00')">00</button><button onclick="playClickSound(); addNum
