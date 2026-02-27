@@ -9,7 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400&display=swap" rel="stylesheet">
   <style>
     :root { 
-      /* 全体的に「気持ち小さく」調整 */
       --font-base: 10vw; 
     }
     body { 
@@ -19,28 +18,25 @@
     }
     #display-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
     
-    /* 履歴：太字を解除し、サイズを適正化 */
     .history-row { 
       padding: 12px 0; font-size: var(--font-base); font-weight: 400; 
       line-height: 1.2; border-bottom: 1.5px solid #f5f5f5; color: #333; word-break: break-all;
     }
     
-    /* 入力中：太字を解除 */
     .current-row-container { 
       padding: 15px 0; font-size: var(--font-base); font-weight: 400; 
       min-height: 70px; display: flex; align-items: baseline; flex-wrap: wrap; color: #3B82C4;
     }
     .token { display: inline-block; white-space: pre; }
 
-    /* 予測結果：入力文字と同じサイズ感にし、少しだけ色を濃く */
+    /* ★ここを修正：1.0emにして、入力文字とサイズを完全に統一★ */
     .preview-text { 
       color: #999; 
       margin-left: 10px; 
-      font-size: 1.05em; 
+      font-size: 1.0em; 
       font-weight: 400;
     }
 
-    /* カーソル代わりの下線 */
     .token-active { border-bottom: 4px solid #3B82C4; margin-bottom: -4px; min-width: 1ch; }
     
     #keypad { 
