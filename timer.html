@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>メンズトーク・カウントダウンタイマー</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000; /* 放送現場で目立たないよう黒背景 */
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #timer {
+            font-size: 35vw; /* 画面横幅の35%のサイズ（画面いっぱい） */
+            font-weight: bold;
+            line-height: 1;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* 残り1分を切った時の警告色 */
+        .warning {
+            color: #ff4500;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="timer">30:00</div>
+
+    <script>
+        let timeLeft = 30 * 60; // 30分を秒換算
+        let timerId = null;
+        const timerDisplay = document.getElementById('timer');
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            
+            // 00:00 形式に整形
+            const displayStr = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            timerDisplay.textContent = displayStr;
+
+            // 残り1分（60秒）で文字色をオレンジに変える演出
+            if (timeLeft <= 60) {
+                timerDisplay.classList.add('warning');
+            } else {
+                timerDisplay.classList.remove('warning');
+            }
+        }
+
+        function startTimer() {
+            if (timerId) return; // 既に動いていたら何もしない
+            
+            timerId = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateDisplay();
+                } else {
+                    clearInterval(timerId);
+                    timerDisplay.textContent = "FINISH";
+                }
+            }, 1000);
+        }
+
+        // 画面をクリックしたらスタート
+        document.body.addEventListener('click', startTimer);
+
+        updateDisplay();
+    </script>
+</body>
+</html>
