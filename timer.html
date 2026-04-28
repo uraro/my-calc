@@ -2,80 +2,113 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>メンズトーク・カウントダウンタイマー</title>
+    <title>メンズトーク・最終調整タイマー</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background-color: #000; /* 放送現場で目立たないよう黒背景 */
+            background-color: #000;
             color: #fff;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
         }
 
-        #timer {
-            font-size: 35vw; /* 画面横幅の35%のサイズ（画面いっぱい） */
-            font-weight: bold;
-            line-height: 1;
-            cursor: pointer;
-            user-select: none;
+        /* ラベルのサイズを少しだけ小さく(15vw → 12vw)調整 */
+        #label {
+            font-size: 12vw; 
+            font-weight: 900;
+            line-height: 1.0;
+            text-align: center;
+            text-transform: uppercase;
+            margin-bottom: 1vh;
         }
 
-        /* 残り1分を切った時の警告色 */
-        .warning {
-            color: #ff4500;
+        /* 数字のインパクトは維持 */
+        #timer {
+            font-size: 35vw; 
+            font-weight: 900;
+            line-height: 0.8;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.05em;
         }
+
+        .color-green { color: #00ff00; }
+        .color-red   { color: #ff0000; }
+        .color-blue  { color: #00bfff; }
+        .color-white { color: #ffffff; }
     </style>
 </head>
 <body>
 
-    <div id="timer">30:00</div>
+    <div id="label">---</div>
+    <div id="timer">00:00</div>
 
     <script>
-        let timeLeft = 30 * 60; // 30分を秒換算
-        let timerId = null;
         const timerDisplay = document.getElementById('timer');
+        const labelDisplay = document.getElementById('label');
 
-        function updateDisplay() {
-            const minutes = Math.floor(timeLeft / 60);
-            const seconds = timeLeft % 60;
+        function updateTimer() {
+            const now = new Date();
             
-            // 00:00 形式に整形
-            const displayStr = 
-                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            timerDisplay.textContent = displayStr;
+            const t1900 = new Date(now); t1900.setHours(19, 0, 0, 0);
+            const t1930 = new Date(now); t1930.setHours(19, 30, 0, 0);
+            const t2100 = new Date(now); t2100.setHours(21, 0, 0, 0);
 
-            // 残り1分（60秒）で文字色をオレンジに変える演出
-            if (timeLeft <= 60) {
-                timerDisplay.classList.add('warning');
-            } else {
-                timerDisplay.classList.remove('warning');
+            let displaySeconds;
+            let labelText = "";
+            let colorClass = "";
+
+            // 判定：19:00:00になった瞬間に「ON AIR」側に入るように
+            if (now < t1900) {
+                // 【19:00まで】ビフォータイム
+                labelText = "ビフォータイム";
+                colorClass = "color-green";
+                // 18:59:59 のときに 00:01 と表示される計算
+                displaySeconds = Math.ceil((t1900 - now) / 1000);
+            } 
+            else if (now >= t1900 && now < t1930) {
+                // 【19:00〜19:30】ON AIR
+                labelText = "ON AIR";
+                colorClass = "color-red";
+                // 19:00:00 の瞬間に 30:00 と表示される計算
+                displaySeconds = Math.ceil((t1930 - now) / 1000);
+            } 
+            else if (now >= t1930 && now <= t2100) {
+                // 【19:30〜21:00】アフタートーク
+                labelText = "アフタートーク";
+                colorClass = "color-blue";
+                // 19:30:00 の瞬間に 00:00 からカウントアップ
+                displaySeconds = Math.floor((now - t1930) / 1000);
+            } 
+            else {
+                labelText = "WAITING";
+                colorClass = "color-white";
+                let target = new Date(now);
+                target.setDate(target.getDate() + 1);
+                target.setHours(19, 0, 0, 0);
+                displaySeconds = Math.ceil((target - now) / 1000);
             }
-        }
 
-        function startTimer() {
-            if (timerId) return; // 既に動いていたら何もしない
+            const m = Math.floor(displaySeconds / 60);
+            const s = displaySeconds % 60;
+
+            const mStr = m.toString().padStart(2, '0');
+            const sStr = s.toString().padStart(2, '0');
             
-            timerId = setInterval(() => {
-                if (timeLeft > 0) {
-                    timeLeft--;
-                    updateDisplay();
-                } else {
-                    clearInterval(timerId);
-                    timerDisplay.textContent = "FINISH";
-                }
-            }, 1000);
+            labelDisplay.textContent = labelText;
+            timerDisplay.textContent = `${mStr}:${sStr}`;
+            timerDisplay.className = colorClass;
+            labelDisplay.className = colorClass;
         }
 
-        // 画面をクリックしたらスタート
-        document.body.addEventListener('click', startTimer);
-
-        updateDisplay();
+            // ミリ秒単位でのズレを最小限にするため、少し頻度を上げて更新
+        setInterval(updateTimer, 100);
+        updateTimer();
     </script>
 </body>
 </html>
