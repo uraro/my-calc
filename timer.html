@@ -2,75 +2,51 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>メンズトーク・タイマー</title>
-    
-    <!-- アプリとして全画面表示するための必須設定 -->
+    <title>メンズトーク・MAXタイマー</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
-
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            color: #fff;
+            margin: 0; padding: 0; background-color: #000; color: #fff;
             font-family: 'Helvetica Neue', Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            position: relative;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            height: 100vh; width: 100vw; overflow: hidden;
         }
-
-        #label {
-            font-size: 12vw; 
-            font-weight: 900;
-            line-height: 1.0;
-            text-align: center;
-            text-transform: uppercase;
-            margin-bottom: 1vh;
-        }
-
-        #timer {
-            font-size: 35vw; 
-            font-weight: 900;
-            line-height: 0.8;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -0.05em;
-        }
-
-        #sync-btn {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 12px;
+        #label { font-size: 12vw; font-weight: 900; line-height: 1.0; text-align: center; }
+        #timer { font-size: 35vw; font-weight: 900; line-height: 0.8; font-variant-numeric: tabular-nums; letter-spacing: -0.05em; }
+        
+        /* 画面全体を覆う透明なボタン（初回タップ用） */
+        #fullscreen-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); color: #fff;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 100; font-size: 5vw; text-align: center;
         }
 
         .color-green { color: #00ff00; }
         .color-red   { color: #ff0000; }
         .color-blue  { color: #00bfff; }
-        .color-white { color: #ffffff; }
     </style>
 </head>
-<body>
+<body onclick="enableFullScreen()">
+
+    <div id="fullscreen-overlay">画面をタップして<br>全画面タイマーを開始</div>
 
     <div id="label">---</div>
     <div id="timer">00:00</div>
-    <button id="sync-btn" onclick="location.reload()">SYNC</button>
 
     <script>
+        // 全画面モードを起動する関数
+        function enableFullScreen() {
+            const doc = document.documentElement;
+            if (doc.requestFullscreen) {
+                doc.requestFullscreen();
+            } else if (doc.webkitRequestFullscreen) {
+                doc.webkitRequestFullscreen();
+            }
+            // オーバーレイを消す
+            document.getElementById('fullscreen-overlay').style.display = 'none';
+        }
+
         const timerDisplay = document.getElementById('timer');
         const labelDisplay = document.getElementById('label');
 
@@ -88,18 +64,15 @@
                 labelText = "ビフォータイム";
                 colorClass = "color-green";
                 displaySeconds = Math.ceil((t1900 - now) / 1000);
-            } 
-            else if (now >= t1900 && now < t1930) {
+            } else if (now >= t1900 && now < t1930) {
                 labelText = "ON AIR";
                 colorClass = "color-red";
                 displaySeconds = Math.ceil((t1930 - now) / 1000);
-            } 
-            else if (now >= t1930 && now <= t2100) {
+            } else if (now >= t1930 && now <= t2100) {
                 labelText = "アフタートーク";
                 colorClass = "color-blue";
                 displaySeconds = Math.floor((now - t1930) / 1000);
-            } 
-            else {
+            } else {
                 labelText = "WAITING";
                 colorClass = "color-white";
                 let target = new Date(now);
@@ -118,11 +91,6 @@
 
         setInterval(updateTimer, 100);
         updateTimer();
-        
-        // 画面スリープ防止（一部のブラウザで有効）
-        if ('wakeLock' in navigator) {
-            navigator.wakeLock.request('screen').catch(()=>{});
-        }
     </script>
 </body>
 </html>
